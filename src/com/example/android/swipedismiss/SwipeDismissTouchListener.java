@@ -170,6 +170,7 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                                     performDismiss();
                                 }
                             });
+                    return true;
                 } else {
                     // cancel
                     mView.animate()
