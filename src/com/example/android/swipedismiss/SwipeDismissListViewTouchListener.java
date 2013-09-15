@@ -205,8 +205,7 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
                         mDownView = null;
                     }
                 }
-                view.onTouchEvent(motionEvent);
-                return true;
+                return false;
             }
 
             case MotionEvent.ACTION_UP: {
