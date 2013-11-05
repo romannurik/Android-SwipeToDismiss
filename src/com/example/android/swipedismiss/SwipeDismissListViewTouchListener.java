@@ -208,6 +208,28 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
                 return false;
             }
 
+            case MotionEvent.ACTION_CANCEL: {
+                if (mVelocityTracker == null) {
+                    break;
+                }
+
+                if (mDownView != null && mSwiping) {
+                    // cancel
+                    mDownView.animate()
+                            .translationX(0)
+                            .alpha(1)
+                            .setDuration(mAnimationTime)
+                            .setListener(null);
+                }
+                mVelocityTracker.recycle();
+                mVelocityTracker = null;
+                mDownX = 0;
+                mDownView = null;
+                mDownPosition = ListView.INVALID_POSITION;
+                mSwiping = false;
+                break;
+            }
+
             case MotionEvent.ACTION_UP: {
                 if (mVelocityTracker == null) {
                     break;
