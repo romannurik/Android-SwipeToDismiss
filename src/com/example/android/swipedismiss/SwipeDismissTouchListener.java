@@ -71,7 +71,9 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
 
     // Transient properties
     private float mDownX;
+    private float mDownY;
     private boolean mSwiping;
+    private int mSwipingSlop;
     private Object mToken;
     private VelocityTracker mVelocityTracker;
     private float mTranslationX;
@@ -128,6 +130,7 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
             case MotionEvent.ACTION_DOWN: {
                 // TODO: ensure this is a finger, and set a flag
                 mDownX = motionEvent.getRawX();
+                mDownY = motionEvent.getRawY();
                 if (mCallbacks.canDismiss(mToken)) {
                     mVelocityTracker = VelocityTracker.obtain();
                     mVelocityTracker.addMovement(motionEvent);
@@ -152,7 +155,8 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                     dismiss = true;
                     dismissRight = deltaX > 0;
                 } else if (mMinFlingVelocity <= absVelocityX && absVelocityX <= mMaxFlingVelocity
-                        && absVelocityY < absVelocityX) {
+                        && absVelocityY < absVelocityX
+                        && absVelocityY < absVelocityX && mSwiping) {
                     // dismiss only if flinging in the same direction as dragging
                     dismiss = (velocityX < 0) == (deltaX < 0);
                     dismissRight = mVelocityTracker.getXVelocity() > 0;
@@ -181,6 +185,7 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                 mVelocityTracker = null;
                 mTranslationX = 0;
                 mDownX = 0;
+                mDownY = 0;
                 mSwiping = false;
                 break;
             }
@@ -199,6 +204,7 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                 mVelocityTracker = null;
                 mTranslationX = 0;
                 mDownX = 0;
+                mDownY = 0;
                 mSwiping = false;
                 break;
             }
@@ -210,21 +216,24 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
 
                 mVelocityTracker.addMovement(motionEvent);
                 float deltaX = motionEvent.getRawX() - mDownX;
-                if (Math.abs(deltaX) > mSlop) {
+                float deltaY = motionEvent.getRawY() - mDownY;
+                if (Math.abs(deltaX) > mSlop && Math.abs(deltaY) < Math.abs(deltaX) / 2) {
                     mSwiping = true;
+                    mSwipingSlop = (deltaX > 0 ? mSlop : -mSlop);
                     mView.getParent().requestDisallowInterceptTouchEvent(true);
 
                     // Cancel listview's touch
                     MotionEvent cancelEvent = MotionEvent.obtain(motionEvent);
                     cancelEvent.setAction(MotionEvent.ACTION_CANCEL |
-                        (motionEvent.getActionIndex() << MotionEvent.ACTION_POINTER_INDEX_SHIFT));
+                            (motionEvent.getActionIndex() <<
+                                    MotionEvent.ACTION_POINTER_INDEX_SHIFT));
                     mView.onTouchEvent(cancelEvent);
                     cancelEvent.recycle();
                 }
 
                 if (mSwiping) {
                     mTranslationX = deltaX;
-                    mView.setTranslationX(deltaX);
+                    mView.setTranslationX(deltaX - mSwipingSlop);
                     // TODO: use an ease-out interpolator or such
                     mView.setAlpha(Math.max(0f, Math.min(1f,
                             1f - 2f * Math.abs(deltaX) / mViewWidth)));
