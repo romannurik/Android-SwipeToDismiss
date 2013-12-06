@@ -253,7 +253,7 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
                     dismiss = (velocityX < 0) == (deltaX < 0);
                     dismissRight = mVelocityTracker.getXVelocity() > 0;
                 }
-                if (dismiss) {
+                if (dismiss && mDownPosition != ListView.INVALID_POSITION) {
                     // dismiss
                     final View downView = mDownView; // mDownView gets null'd before animation ends
                     final int downPosition = mDownPosition;
@@ -357,6 +357,10 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
                         dismissPositions[i] = mPendingDismisses.get(i).position;
                     }
                     mCallbacks.onDismiss(mListView, dismissPositions);
+                    
+                    // Reset mDownPosition to avoid MotionEvent.ACTION_UP trying to start a dismiss 
+                    // animation with a stale position
+                    mDownPosition = ListView.INVALID_POSITION;
 
                     ViewGroup.LayoutParams lp;
                     for (PendingDismissData pendingDismiss : mPendingDismisses) {
