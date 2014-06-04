@@ -97,6 +97,9 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
     private View mDownView;
     private boolean mPaused;
 
+    //View properties
+    private float mAlpha = 1f;
+
     /**
      * The callback interface used by {@link SwipeDismissListViewTouchListener} to inform its client
      * about a successful dismissal of one or more list item positions.
@@ -199,6 +202,7 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
                 }
 
                 if (mDownView != null) {
+                    mAlpha = mDownView.getAlpha();
                     mDownX = motionEvent.getRawX();
                     mDownY = motionEvent.getRawY();
                     mDownPosition = mListView.getPositionForView(mDownView);
@@ -221,7 +225,7 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
                     // cancel
                     mDownView.animate()
                             .translationX(0)
-                            .alpha(1)
+                            .alpha(mAlpha)
                             .setDuration(mAnimationTime)
                             .setListener(null);
                 }
@@ -276,7 +280,7 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
                     // cancel
                     mDownView.animate()
                             .translationX(0)
-                            .alpha(1)
+                            .alpha(mAlpha)
                             .setDuration(mAnimationTime)
                             .setListener(null);
                 }
@@ -372,7 +376,7 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
                     ViewGroup.LayoutParams lp;
                     for (PendingDismissData pendingDismiss : mPendingDismisses) {
                         // Reset view presentation
-                        pendingDismiss.view.setAlpha(1f);
+                        pendingDismiss.view.setAlpha(mAlpha);
                         pendingDismiss.view.setTranslationX(0);
                         lp = pendingDismiss.view.getLayoutParams();
                         lp.height = originalHeight;

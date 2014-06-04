@@ -78,6 +78,9 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
     private VelocityTracker mVelocityTracker;
     private float mTranslationX;
 
+    //View properties
+    private float mAlpha = 1f;
+
     /**
      * The callback interface used by {@link SwipeDismissTouchListener} to inform its client
      * about a successful dismissal of the view for which it was created.
@@ -135,6 +138,10 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                     mVelocityTracker = VelocityTracker.obtain();
                     mVelocityTracker.addMovement(motionEvent);
                 }
+
+                if(mView != null) {
+                    mAlpha = mView.getAlpha();
+                }
                 return false;
             }
 
@@ -177,7 +184,7 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                     // cancel
                     mView.animate()
                             .translationX(0)
-                            .alpha(1)
+                            .alpha(mAlpha)
                             .setDuration(mAnimationTime)
                             .setListener(null);
                 }
@@ -197,7 +204,7 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
 
                 mView.animate()
                         .translationX(0)
-                        .alpha(1)
+                        .alpha(mAlpha)
                         .setDuration(mAnimationTime)
                         .setListener(null);
                 mVelocityTracker.recycle();
@@ -260,7 +267,7 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
             public void onAnimationEnd(Animator animation) {
                 mCallbacks.onDismiss(mView, mToken);
                 // Reset view presentation
-                mView.setAlpha(1f);
+                mView.setAlpha(mAlpha);
                 mView.setTranslationX(0);
                 lp.height = originalHeight;
                 mView.setLayoutParams(lp);
