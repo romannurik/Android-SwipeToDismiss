@@ -16,6 +16,10 @@
 
 package com.example.android.swipedismiss;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
@@ -29,10 +33,6 @@ import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
 import android.widget.AbsListView;
 import android.widget.ListView;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * A {@link View.OnTouchListener} that makes the list items in a {@link ListView}
@@ -50,17 +50,31 @@ import java.util.List;
  * <p>Example usage:</p>
  *
  * <pre>
- * SwipeDismissListViewTouchListener touchListener =
- *         new SwipeDismissListViewTouchListener(
- *                 listView,
- *                 new SwipeDismissListViewTouchListener.OnDismissCallback() {
- *                     public void onDismiss(ListView listView, int[] reverseSortedPositions) {
- *                         for (int position : reverseSortedPositions) {
- *                             adapter.remove(adapter.getItem(position));
- *                         }
- *                         adapter.notifyDataSetChanged();
- *                     }
- *                 });
+ * 
+ * SwipeDismissListViewTouchListener touchListener = new SwipeDismissListViewTouchListener(listView, new DismissCallbacks() {
+
+			@Override
+			public boolean canDismiss(int position) {
+				// all cells in the listView can be swiped, make conditional if you like
+				return true;
+			}
+
+			@Override
+			public void aboutToDismiss(int position) {
+				// notified before the dismiss actually takes place which alters the positions/data
+				// provides ability to update the object based on this position before the list change
+				 
+				// if needed adapter.remove(adapter.getItem(position));
+
+			}
+
+			@Override
+			public void onDismiss(ListView listView, int[] reverseSortedPositions) {
+				// if needed, adapter.notifyDataSetChanged();
+			}
+
+		});
+ *
  * listView.setOnTouchListener(touchListener);
  * listView.setOnScrollListener(touchListener.makeScrollListener());
  * </pre>
@@ -106,6 +120,11 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
          * Called to determine whether the given position can be dismissed.
          */
         boolean canDismiss(int position);
+        
+        /**
+         * Called right before the dismiss behavior happens
+         */
+        void aboutToDismiss(int position);
 
         /**
          * Called when the user has indicated they she would like to dismiss one or more list item
@@ -341,6 +360,7 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
     }
 
     private void performDismiss(final View dismissView, final int dismissPosition) {
+    	mCallbacks.aboutToDismiss(dismissPosition);
         // Animate the dismissed list item to zero-height and fire the dismiss callback when
         // all dismissed list item animations have completed. This triggers layout on each animation
         // frame; in the future we may want to do something smarter and more performant.
