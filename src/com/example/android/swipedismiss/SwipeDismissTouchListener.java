@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.example.android.swipedismiss;
 
 import android.animation.Animator;
@@ -32,15 +31,15 @@ import android.widget.ListView;
 /**
  * A {@link View.OnTouchListener} that makes any {@link View} dismissable when the
  * user swipes (drags her finger) horizontally across the view.
- *
+ * <p/>
  * <p><em>For {@link ListView} list items that don't manage their own touch events
  * (i.e. you're using
  * {@link ListView#setOnItemClickListener(AdapterView.OnItemClickListener)}
  * or an equivalent listener on {@link ListActivity} or
  * {@link ListFragment}, use {@link SwipeDismissListViewTouchListener} instead.</em></p>
- *
+ * <p/>
  * <p>Example usage:</p>
- *
+ * <p/>
  * <pre>
  * view.setOnTouchListener(new SwipeDismissTouchListener(
  *         view,
@@ -51,7 +50,7 @@ import android.widget.ListView;
  *             }
  *         }));
  * </pre>
- *
+ * <p/>
  * <p>This class Requires API level 12 or later due to use of {@link
  * android.view.ViewPropertyAnimator}.</p>
  *
@@ -78,9 +77,6 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
     private VelocityTracker mVelocityTracker;
     private float mTranslationX;
 
-    //View properties
-    private float mAlpha = 1f;
-
     /**
      * The callback interface used by {@link SwipeDismissTouchListener} to inform its client
      * about a successful dismissal of the view for which it was created.
@@ -98,15 +94,22 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
          * @param token The optional token passed to this object's constructor.
          */
         void onDismiss(View view, Object token);
+
+        /**
+         * Called before dismissing list item. Can be used to show alert dialog to confirm removal of an item.
+         *
+         * @param dismissDirection
+         */
+        void preDismiss(boolean dismissDirection);
     }
 
     /**
      * Constructs a new swipe-to-dismiss touch listener for the given view.
      *
-     * @param view     The view to make dismissable.
-     * @param token    An optional token/cookie object to be passed through to the callback.
+     * @param view      The view to make dismissable.
+     * @param token     An optional token/cookie object to be passed through to the callback.
      * @param callbacks The callback to trigger when the user has indicated that she would like to
-     *                 dismiss this view.
+     *                  dismiss this view.
      */
     public SwipeDismissTouchListener(View view, Object token, DismissCallbacks callbacks) {
         ViewConfiguration vc = ViewConfiguration.get(view.getContext());
@@ -138,10 +141,6 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                     mVelocityTracker = VelocityTracker.obtain();
                     mVelocityTracker.addMovement(motionEvent);
                 }
-
-                if(mView != null) {
-                    mAlpha = mView.getAlpha();
-                }
                 return false;
             }
 
@@ -169,31 +168,12 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                     dismissRight = mVelocityTracker.getXVelocity() > 0;
                 }
                 if (dismiss) {
-                    // dismiss
-                    mView.animate()
-                            .translationX(dismissRight ? mViewWidth : -mViewWidth)
-                            .alpha(0)
-                            .setDuration(mAnimationTime)
-                            .setListener(new AnimatorListenerAdapter() {
-                                @Override
-                                public void onAnimationEnd(Animator animation) {
-                                    performDismiss();
-                                }
-                            });
+                    // pre dismiss
+                    mCallbacks.preDismiss(dismissRight);
                 } else if (mSwiping) {
                     // cancel
-                    mView.animate()
-                            .translationX(0)
-                            .alpha(mAlpha)
-                            .setDuration(mAnimationTime)
-                            .setListener(null);
+                    onDismissCancelled();
                 }
-                mVelocityTracker.recycle();
-                mVelocityTracker = null;
-                mTranslationX = 0;
-                mDownX = 0;
-                mDownY = 0;
-                mSwiping = false;
                 break;
             }
 
@@ -204,15 +184,10 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
 
                 mView.animate()
                         .translationX(0)
-                        .alpha(mAlpha)
+                        .alpha(1)
                         .setDuration(mAnimationTime)
                         .setListener(null);
-                mVelocityTracker.recycle();
-                mVelocityTracker = null;
-                mTranslationX = 0;
-                mDownX = 0;
-                mDownY = 0;
-                mSwiping = false;
+                reset();
                 break;
             }
 
@@ -252,6 +227,38 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
         return false;
     }
 
+    private void reset() {
+        mVelocityTracker.recycle();
+        mVelocityTracker = null;
+        mTranslationX = 0;
+        mDownX = 0;
+        mDownY = 0;
+        mSwiping = false;
+    }
+
+    public void onDismissAllowed(boolean dismissRight) {
+        mView.animate()
+                .translationX(dismissRight ? mViewWidth : -mViewWidth)
+                .alpha(0)
+                .setDuration(mAnimationTime)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        performDismiss();
+                    }
+                });
+        reset();
+    }
+
+    public void onDismissCancelled() {
+        mView.animate()
+                .translationX(0)
+                .alpha(1)
+                .setDuration(mAnimationTime)
+                .setListener(null);
+        reset();
+    }
+
     private void performDismiss() {
         // Animate the dismissed view to zero-height and then fire the dismiss callback.
         // This triggers layout on each animation frame; in the future we may want to do something
@@ -267,7 +274,7 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
             public void onAnimationEnd(Animator animation) {
                 mCallbacks.onDismiss(mView, mToken);
                 // Reset view presentation
-                mView.setAlpha(mAlpha);
+                mView.setAlpha(1f);
                 mView.setTranslationX(0);
                 lp.height = originalHeight;
                 mView.setLayoutParams(lp);
