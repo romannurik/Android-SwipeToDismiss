@@ -272,7 +272,7 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener {
                                     performDismiss(downView, downPosition);
                                 }
                             });
-                } else {
+                } else if(mSwiping){
                     // cancel
                     mDownView.animate()
                             .translationX(0)
