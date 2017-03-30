@@ -16,6 +16,9 @@
 
 package com.example.android.swipedismiss;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import android.app.ListActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -24,9 +27,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class MainActivity extends ListActivity {
     ArrayAdapter<String> mAdapter;
@@ -59,6 +59,17 @@ public class MainActivity extends ListActivity {
                             public boolean canDismiss(int position) {
                                 return true;
                             }
+                            
+                            @Override
+                			public void aboutToDismiss(int position) {
+                            	/* Notified before the dismiss actually takes place which alters the positions/data
+                            	 * 
+                            	 * With more complex data in your cells, this provides the ability to update the 
+                            	 * object based on this position before the list change
+                            	 * 
+                            	 * if needed adapter.remove(adapter.getItem(position));
+                            	 */
+                			}
 
                             @Override
                             public void onDismiss(ListView listView, int[] reverseSortedPositions) {
